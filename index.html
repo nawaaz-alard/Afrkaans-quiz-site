@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grade 8 Afrikaans Quiz (OAuth)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .signin-gate {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+      display: flex; justify-content: center; align-items: center; z-index: 9999;
+    }
+    .signin-box {
+      background: white; padding: 2.5rem; border-radius: 1rem;
+      width: 90%; max-width: 480px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    .app-select {
+      display: flex; align-items: center; gap: 12px; padding: 14px; background: #f1f5f9; border-radius: 10px; margin: 10px 0;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .app-select:hover { background: #e0e7ff; }
+    .app-select.selected { background: #dbeafe; border: 2px solid #3b82f6; }
+    .spinner { width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-ok { color: #059669; font-weight: 600; }
+    .status-fail { color: #dc2626; font-weight: 600; }
+    .debug { @apply bg-red-100 text-red-800 p-4 rounded-lg text-center max-w-xl mx-auto mt-8 hidden; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+
+  <!-- Debug Fallback -->
+  <div id="fallback" class="debug">
+    <strong>OAuth Setup Required.</strong><br>
+    Add your CLIENT_IDs in the script section below.
+  </div>
+
+  <!-- SIGN-IN GATEWAY -->
+  <div id="signin-gate" class="signin-gate">
+    <div class="signin-box">
+      <h2 class="text-2xl font-bold text-indigo-700 mb-2">Afrikaans Quiz Login</h2>
+      <p class="text-gray-600 mb-6">Select <strong>ONE</strong> app and sign in</p>
+
+      <input type="text" id="name" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg mb-5" />
+
+      <div id="app-list" class="mb-6">
+        <!-- Apps injected here -->
+      </div>
+
+      <div id="status" class="mb-4 text-sm font-medium"></div>
+
+      <button id="login-btn" onclick="startLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50" disabled>
+        Sign In & Enter Quiz
+      </button>
+
+      <p class="text-xs text-gray-500 mt-4">Uses secure OAuth 2.0</p>
+    </div>
+  </div>
+
+  <!-- QUIZ (Hidden until login) -->
+  <header class="bg-gradient-to-r from-sky-600 to-indigo-600 text-white p-5 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Grade 8 Afrikaans — Quiz</h1>
+    </div>
+  </header>
+
+  <main id="quiz-main" class="container mx-auto p-6 grid lg:grid-cols-3 gap-6" style="display: none;">
+    <section class="lg:col-span-2">
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h2 class="text-xl font-semibold mb-6">Afrikaans Quiz</h2>
+        <ol id="questions" class="space-y-6 list-decimal list-inside"></ol>
+        <div class="mt-8 flex gap-3">
+          <button onclick="submitQuiz()" class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+            Submit & Grade
+          </button>
+          <button onclick="resetQuiz()" class="px-5 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+            Reset
+          </button>
+        </div>
+        <div id="score" class="mt-4 p-4 bg-emerald-50 rounded-lg font-medium" style="display:none;"></div>
+      </div>
+    </section>
+
+    <aside>
+      <div id="teacher" class="bg-white p-5 rounded-xl shadow-lg" style="display:none;">
+        <h3 class="font-semibold text-lg mb-3">Teacher Results</h3>
+        <button onclick="downloadCSV()" class="w-full mb-3 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700">
+          Download CSV
+        </button>
+        <div id="results" class="text-sm"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // === CONFIG: Replace with your real IDs ===
+    const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.googleusercontent.com';
+    const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
+    const MICROSOFT_CLIENT_ID = 'YOUR_MICROSOFT_CLIENT_ID'; // From Azure Portal
+    const MICROSOFT_TENANT_ID = 'common'; // or your tenant ID
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+    const MEDIA_APPS = [
+      { name: 'Google (YouTube/Drive)', type: 'google', scopes: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/drive.readonly' },
+      { name: 'Spotify', type: 'spotify', scopes: 'user-read-private user-read-email' },
+      { name: 'Microsoft (Teams/OneDrive)', type: 'microsoft', scopes: 'User.Read Files.Read' },
+      { name: 'Kahoot', type: 'kahoot', scopes: '' } // Simulated
+    ];
+
+    let answers = {};
+    let user = null;
+    let selectedApp = null;
+    let authToken = null;
+
+    // === RENDER APP LIST ===
+    function renderAppList() {
+      const container = document.getElementById('app-list');
+      container.innerHTML = '';
+      MEDIA_APPS.forEach(app => {
+        const div = document.createElement('div');
+        div.className = 'app-select';
+        div.onclick = () => selectApp(app, div);
+        div.innerHTML = `<div class="flex-1 text-left font-medium">${app.name}</div>`;
+        container.appendChild(div);
+      });
+    }
+
+    function selectApp(app, element) {
+      document.querySelectorAll('.app-select').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedApp = app;
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('status').innerHTML = `<span class="text-blue-600">Selected: ${app.name}</span>`;
+    }
+
+    // === GOOGLE OAUTH ===
+    function googleSignIn() {
+      if (GOOGLE_CLIENT_ID.includes('YOUR_')) return simulateAuthSuccess();
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+        scope: selectedApp.scopes
+      });
+      google.accounts.id.prompt();
+    }
+
+    function handleGoogleCallback(response) {
+      authToken = response.credential;
+      verifyGoogleToken(authToken).then(() => enterQuiz());
+    }
+
+    async function verifyGoogleToken(token) {
+      const res = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
+      const data = await res.json();
+      if (data.name) {
+        user = { name: data.name, email: data.email, app: selectedApp.name };
+        return true;
+      }
+      throw new Error('Invalid token');
+    }
+
+    // === SPOTIFY OAUTH (PKCE) ===
+    async function spotifySignIn() {
+      if (SPOTIFY_CLIENT_ID.includes('YOUR_')) return simulateAuthSuccess();
+      const verifier = generateCodeVerifier();
+      const challenge = await generateCodeChallenge(verifier);
+      localStorage.setItem('pkce_verifier', verifier);
+
+      const params = new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: REDIRECT_URI,
+        scope: selectedApp.scopes,
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+        state: generateState()
+      });
+
+      window.location.href = `https://accounts.spotify.com/authorize?${params}`;
+    }
+
+    // === MICROSOFT OAUTH (PKCE) ===
+    async function microsoftSignIn() {
+      if (MICROSOFT_CLIENT_ID.includes('YOUR_')) return simulateAuthSuccess();
+      const verifier = generateCodeVerifier();
+      const challenge = await generateCodeChallenge(verifier);
+      localStorage.setItem('ms_pkce', verifier);
+
+      const params = new URLSearchParams({
+        client_id: MICROSOFT_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: REDIRECT_URI,
+        scope: selectedApp.scopes,
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+        prompt: 'select_account'
+      });
+
+      window.location.href = `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize?${params}`;
+    }
+
+    // PKCE Helpers
+    function generateCodeVerifier() {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      return btoa(String.fromCharCode(...array)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    async function generateCodeChallenge(verifier) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(verifier);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function generateState() {
+      return btoa(Math.random().toString()).substring(0, 20);
+    }
+
+    // === HANDLE CALLBACKS ===
+    function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+
+      if (code && selectedApp) {
+        if (selectedApp.type === 'spotify') {
+          exchangeSpotifyCode(code);
+        } else if (selectedApp.type === 'microsoft') {
+          exchangeMicrosoftCode(code);
+        }
+      }
+    }
+
+    async function exchangeSpotifyCode(code) {
+      const verifier = localStorage.getItem('pkce_verifier');
+      const res = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: SPOTIFY_CLIENT_ID,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: REDIRECT_URI,
+          code_verifier: verifier
+        })
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        verifySpotifyToken(data.access_token);
+      }
+    }
+
+    async function verifySpotifyToken(token) {
+      const res = await fetch('https://api.spotify.com/v1/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      user = { name: data.display_name || 'Spotify User', email: data.email, app: selectedApp.name };
+      enterQuiz();
+    }
+
+    async function exchangeMicrosoftCode(code) {
+      const verifier = localStorage.getItem('ms_pkce');
+      const res = await fetch(`https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: MICROSOFT_CLIENT_ID,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: REDIRECT_URI,
+          code_verifier: verifier,
+          scope: selectedApp.scopes
+        })
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        verifyMicrosoftToken(data.access_token);
+      }
+    }
+
+    async function verifyMicrosoftToken(token) {
+      const res = await fetch('https://graph.microsoft.com/v1.0/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      user = { name: data.displayName || 'Microsoft User', email: data.mail || data.userPrincipalName, app: selectedApp.name };
+      enterQuiz();
+    }
+
+    // === SIMULATED FALLBACK ===
+    function simulateAuthSuccess() {
+      user = { name: document.getElementById('name').value.trim(), app: selectedApp.name };
+      enterQuiz();
+    }
+
+    // === ENTER QUIZ ===
+    function enterQuiz() {
+      history.replaceState(null, '', window.location.pathname); // Clean URL
+      document.getElementById('signin-gate').remove();
+      document.getElementById('quiz-main').style.display = 'grid';
+      showBanner();
+      renderQuiz();
+      loadMockResults();
+    }
+
+    function showBanner() {
+      const banner = document.createElement('div');
+      banner.className = 'fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-3 rounded-lg text-sm font-medium flex items-center gap-3 shadow-xl z-50';
+      banner.innerHTML = `
+        ${user.name} (${user.app})
+        <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs">Logout</button>
+      `;
+      document.body.appendChild(banner);
+    }
+
+    function logout() {
+      if (confirm('Return to login?')) location.reload();
+    }
+
+    // === QUIZ LOGIC ===
+    const MOCK_QUESTIONS = [
+      { id: 'q1', prompt: '1. dapper — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'courageous' },
+      { id: 'q2', prompt: '2. gemeenskap — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'society' },
+      { id: 'q3', prompt: "What happened to Lungile's dog?", type: 'short', answer: "in die swembad geval" },
+      { id: 'q4', prompt: "Hierdie hond is _____ as daardie een.", type: 'select', options: ['mooi','mooier','mooiste'], answer: 'mooier' },
+      { id: 'q5', prompt: "Translate: Die meisie is dapper en slim.", type: 'short', answer: "the girl is brave and clever" }
+    ];
+
+    function renderQuiz() {
+      const ol = document.getElementById('questions');
+      ol.innerHTML = '';
+      MOCK_QUESTIONS.forEach(q => {
+        const li = document.createElement('li');
+        li.className = 'space-y-2';
+        li.innerHTML = `<div class="font-medium">${q.prompt}</div>`;
+
+        if (q.type === 'short') {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.placeholder = 'Jou antwoord...';
+          input.className = 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500';
+          input.oninput = e => answers[q.id] = e.target.value;
+          li.appendChild(input);
+        } else {
+          const select = document.createElement('select');
+          select.className = 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500';
+          const opt = document.createElement('option');
+          opt.value = ''; opt.text = '-- Kies --';
+          select.appendChild(opt);
+          q.options.forEach(o => {
+            const option = document.createElement('option');
+            option.value = option.text = o;
+            select.appendChild(option);
+          });
+          select.onchange = e => answers[q.id] = e.target.value;
+          li.appendChild(select);
+        }
+        ol.appendChild(li);
+      });
+    }
+
+    function submitQuiz() {
+      let correct = 0;
+      MOCK_QUESTIONS.forEach(q => {
+        const expected = (q.answer || '').trim().toLowerCase();
+        const got = (answers[q.id] || '').trim().toLowerCase();
+        if (got && (got === expected || expected.includes(got))) correct++;
+      });
+      const scoreEl = document.getElementById('score');
+      scoreEl.innerHTML = `<strong>Score:</strong> ${correct} / ${MOCK_QUESTIONS.length}`;
+      scoreEl.style.display = 'block';
+      addMockResult(correct);
+    }
+
+    function resetQuiz() {
+      answers = {};
+      document.getElementById('score').style.display = 'none';
+      renderQuiz();
+    }
+
+    // === MOCK RESULTS ===
+    let mockResults = JSON.parse(localStorage.getItem('mock_results') || '[]');
+
+    function addMockResult(score) {
+      const result = { name: user.name, app: user.app, correct: score, total: MOCK_QUESTIONS.length, time: new Date().toISOString() };
+      mockResults.push(result);
+      localStorage.setItem('mock_results', JSON.stringify(mockResults));
+      loadMockResults();
+    }
+
+    function loadMockResults() {
+      const div = document.getElementById('results');
+      if (mockResults.length === 0) {
+        div.innerHTML = '<p class="text-gray-500">No results yet.</p>';
+        return;
+      }
+      let table = `<table class="w-full text-left text-sm"><thead><tr class="border-b"><th>Name</th><th>App</th><th>Score</th><th>Time</th></tr></thead><tbody>`;
+      mockResults.forEach(r => {
+        table += `<tr class="border-b"><td>${r.name}</td><td>${r.app}</td><td>${r.correct}/${r.total}</td><td class="text-xs">${new Date(r.time).toLocaleString()}</td></tr>`;
+      });
+      table += `</tbody></table>`;
+      div.innerHTML = table;
+      document.getElementById('teacher').style.display = 'block';
+    }
+
+    function downloadCSV() {
+      if (mockResults.length === 0) return alert('No data');
+      let csv = 'Name,App,Correct,Total,Time\n';
+      mockResults.forEach(r => {
+        csv += `"${r.name}","${r.app}",${r.correct},${r.total},"${r.time}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'afrikaans_results.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // === START LOGIN ===
+    function startLogin() {
+      const name = document.getElementById('name').value.trim();
+      if (!name) return alert('Please enter your name.');
+      if (!selectedApp) return alert('Please select one app.');
+
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Redirecting...';
+
+      switch (selectedApp.type) {
+        case 'google':
+          googleSignIn();
+          break;
+        case 'spotify':
+          spotifySignIn();
+          break;
+        case 'microsoft':
+          microsoftSignIn();
+          break;
+        case 'kahoot':
+          simulateAuthSuccess();
+          break;
+      }
+    }
+
+    // === INIT ===
+    window.addEventListener('load', () => {
+      handleCallback();
+      renderAppList();
+      document.getElementById('fallback').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
