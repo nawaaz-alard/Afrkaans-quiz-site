@@ -36,56 +36,16 @@
     .tab-btn.inactive { @apply border-transparent text-gray-500; }
     .app-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     @media (max-width: 480px) { .app-grid { grid-template-columns: 1fr; } }
-
-    /* RESPONSIVE SOCIAL ICONS */
-    .social-icons {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 1rem;
-      padding: 0 8px;
+    .social-icons { 
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 1rem; 
     }
-    @media (max-width: 640px) {
-      .social-icons { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    }
-    @media (max-width: 480px) {
-      .social-icons { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    }
-    @media (max-width: 360px) {
-      .social-icons { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-    }
-
     .social-icon {
-      aspect-ratio: 1;
-      border-radius: 14px;
-      background: #f8f9fa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      min-width: 44px;
-      max-width: 60px;
-      overflow: hidden;
+      width: 48px; height: 48px; border-radius: 12px; background: #f8f9fa; display: flex; 
+      align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .social-icon:hover {
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-      background: #ffffff;
-    }
-    .social-icon img {
-      width: 62%;
-      height: 62%;
-      object-fit: contain;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-    }
-    .social-icon.kahoot {
-      background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-    }
-    .social-icon.kahoot:hover {
-      background: linear-gradient(135deg, #b2ebf2, #80deea);
-    }
+    .social-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .social-icon img { width: 28px; height: 28px; object-fit: contain; }
   </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
@@ -114,50 +74,40 @@
         </button>
         <p class="text-xs text-gray-500">Demo: any email + password "demo"</p>
 
-        <!-- RESPONSIVE SOCIAL ICONS — WITH FULL LOGOS -->
+        <!-- SOCIAL ICONS UNDER EMAIL BUTTON -->
         <div class="social-icons">
-          <!-- Google -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[0])" title="Google">
-            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" onerror="this.src='https://via.placeholder.com/60x30?text=G'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[0])" title="Google">
+            <img src="https://www.google.com/favicon.ico" alt="Google" onerror="this.src='https://via.placeholder.com/28?text=G'">
           </div>
-          <!-- Apple -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[1])" title="Apple">
-            <img src="https://developer.apple.com/assets/elements/icons/apple-sign-in/apple-sign-in-32x32.png" alt="Apple" onerror="this.src='https://via.placeholder.com/32?text=A'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[1])" title="Apple">
+            <img src="https://www.apple.com/favicon.ico" alt="Apple" onerror="this.src='https://via.placeholder.com/28?text=A'">
           </div>
-          <!-- Microsoft -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[2])" title="Microsoft">
-            <img src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_signin_light.png" alt="Microsoft" onerror="this.src='https://via.placeholder.com/60?text=M'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[2])" title="Microsoft">
+            <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" onerror="this.src='https://via.placeholder.com/28?text=M'">
           </div>
-          <!-- Facebook -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[3])" title="Facebook">
-            <img src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook" onerror="this.src='https://via.placeholder.com/32?text=F'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[3])" title="Facebook">
+            <img src="https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico" alt="Facebook" onerror="this.src='https://via.placeholder.com/28?text=F'">
           </div>
-          <!-- TikTok -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[4])" title="TikTok">
-            <img src="https://sf16-scmcdn-sg.ibytedtos.com/obj/ies-sg-tiktok-cmp/tiktok_favicon.ico" alt="TikTok" onerror="this.src='https://via.placeholder.com/32?text=TT'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[4])" title="TikTok">
+            <img src="https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico" alt="TikTok" onerror="this.src='https://via.placeholder.com/28?text=TT'">
           </div>
-          <!-- Instagram -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[5])" title="Instagram">
-            <img src="https://www.instagram.com/static/images/ico/favicon-192.png" alt="Instagram" onerror="this.src='https://via.placeholder.com/32?text=IG'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[5])" title="Instagram">
+            <img src="https://www.instagram.com/static/images/ico/favicon-192.png" alt="Instagram" onerror="this.src='https://via.placeholder.com/28?text=IG'">
           </div>
-          <!-- Spotify -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[6])" title="Spotify">
-            <img src="https://developer.spotify.com/assets/branding-guidelines/icon3@2x.png" alt="Spotify" onerror="this.src='https://via.placeholder.com/40?text=S'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[6])" title="Spotify">
+            <img src="https://www.spotify.com/favicon.ico" alt="Spotify" onerror="this.src='https://via.placeholder.com/28?text=S'">
           </div>
-          <!-- WhatsApp -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[7])" title="WhatsApp">
-            <img src="https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png" alt="WhatsApp" onerror="this.src='https://via.placeholder.com/32?text=WA'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[7])" title="WhatsApp">
+            <img src="https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png" alt="WhatsApp" onerror="this.src='https://via.placeholder.com/28?text=WA'">
           </div>
-          <!-- X (Twitter) -->
-          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[8])" title="X (Twitter)">
-            <img src="https://about.x.com/etc/designs/xcom/clientlibs/resources/images/favicon.ico" alt="X" onerror="this.src='https://via.placeholder.com/32?text=X'">
+          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[8])" title="X (Twitter)">
+            <img src="https://abs.twimg.com/favicons/favicon.ico" alt="X" onerror="this.src='https://via.placeholder.com/28?text=X'">
           </div>
-          <!-- Kahoot (Free) -->
-          <div class="social-icon kahoot" onclick="loginWithApp(MEDIA_APPS[9])" title="Kahoot (Free)">
-            <img src="https://kahoot.com/favicon.ico" alt="Kahoot" onerror="this.src='https://via.placeholder.com/32?text=K'">
+          <div class="social-icon bg-emerald-100" onclick="selectAppAndStart(MEDIA_APPS[9])" title="Kahoot (Free)">
+            <img src="https://kahoot.com/favicon.ico" alt="Kahoot" onerror="this.src='https://via.placeholder.com/28?text=K'">
           </div>
         </div>
-        <p class="text-xs text-gray-400 mt-3 text-center">Tap an icon to sign in instantly</p>
+        <p class="text-xs text-gray-400 mt-2">Or use full social login below</p>
       </div>
       <!-- Social Login Tab -->
       <div id="social-tab" class="hidden space-y-4">
@@ -224,54 +174,31 @@
 
     // === 10 MOST USED MEDIA APPS (2025) ===
     const MEDIA_APPS = [
-      { name: 'Google', type: 'google', logo: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png' },
-      { name: 'Apple', type: 'apple', logo: 'https://developer.apple.com/assets/elements/icons/apple-sign-in/apple-sign-in-32x32.png' },
-      { name: 'Microsoft', type: 'microsoft', logo: 'https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_signin_light.png' },
-      { name: 'Facebook', type: 'facebook', logo: 'https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico' },
-      { name: 'TikTok', type: 'tiktok', logo: 'https://sf16-scmcdn-sg.ibytedtos.com/obj/ies-sg-tiktok-cmp/tiktok_favicon.ico' },
-      { name: 'Instagram', type: 'instagram', logo: 'https://www.instagram.com/static/images/ico/favicon-192.png' },
-      { name: 'Spotify', type: 'spotify', logo: 'https://developer.spotify.com/assets/branding-guidelines/icon3@2x.png' },
-      { name: 'WhatsApp', type: 'whatsapp', logo: 'https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png' },
-      { name: 'X (Twitter)', type: 'twitter', logo: 'https://about.x.com/etc/designs/xcom/clientlibs/resources/images/favicon.ico' },
-      { name: 'Kahoot (Free)', type: 'kahoot', logo: 'https://kahoot.com/favicon.ico', free: true }
+      { name: 'Google', type: 'google', icon: 'https://www.google.com/favicon.ico' },
+      { name: 'Apple', type: 'apple', icon: 'https://www.apple.com/favicon.ico' },
+      { name: 'Microsoft', type: 'microsoft', icon: 'https://www.microsoft.com/favicon.ico' },
+      { name: 'Facebook', type: 'facebook', icon: 'https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico' },
+      { name: 'TikTok', type: 'tiktok', icon: 'https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico' },
+      { name: 'Instagram', type: 'instagram', icon: 'https://www.instagram.com/static/images/ico/favicon-192.png' },
+      { name: 'Spotify', type: 'spotify', icon: 'https://www.spotify.com/favicon.ico' },
+      { name: 'WhatsApp', type: 'whatsapp', icon: 'https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png' },
+      { name: 'X (Twitter)', type: 'twitter', icon: 'https://abs.twimg.com/favicons/favicon.ico' },
+      { name: 'Kahoot (Free)', type: 'kahoot', icon: 'https://kahoot.com/favicon.ico', free: true }
     ];
 
     let answers = {}, user = null, selectedApp = null;
 
-    // === INSTANT LOGIN FROM ICON CLICK ===
-    function loginWithApp(app) {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email-input').value.trim();
-
-      document.getElementById('name-social').value = name;
-      document.getElementById('email-social').value = email;
-
+    // === HELPER: Click icon → select app + start login ===
+    function selectAppAndStart(app) {
       selectedApp = app;
-
+      document.getElementById('name-social').value = document.getElementById('name').value || '';
+      document.getElementById('email-social').value = document.getElementById('email-input').value || '';
       switchTab('social');
       setTimeout(() => {
-        const listItem = Array.from(document.querySelectorAll('.app-select'))
-          .find(el => el.textContent.includes(app.name));
-        if (listItem) listItem.click();
+        const el = document.querySelector(`.app-select img[src*="${app.icon.split('/').pop()}"]`)?.parentElement;
+        if (el) el.click();
+        else startLogin();
       }, 100);
-
-      if (app.free) {
-        user = { name: name || app.name + ' User', email: email || 'free@kahoot.com', app: app.name };
-        enterQuiz();
-        return;
-      }
-
-      if (app.type === 'google') return googleSignIn();
-      if (app.type === 'apple') return appleSignIn();
-      if (app.type === 'microsoft') return microsoftSignIn();
-      if (app.type === 'facebook') return facebookSignIn();
-      if (app.type === 'tiktok') return tiktokSignIn();
-
-      if (name && email) {
-        startPayFast();
-      } else {
-        alert(`Please enter your name and email to continue with ${app.name}`);
-      }
     }
 
     // === TAB SWITCHING ===
@@ -313,7 +240,7 @@
         div.className = 'app-select';
         div.onclick = () => selectApp(app, div);
         div.innerHTML = `
-          <img src="${app.logo}" class="w-8 h-8 rounded" onerror="this.src='https://via.placeholder.com/32'">
+          <img src="${app.icon}" class="w-6 h-6 rounded" onerror="this.src='https://via.placeholder.com/24'">
           <div class="flex-1 text-left font-medium">${app.name}</div>
           ${app.free ? '<span class="text-xs text-emerald-600">Free</span>' : ''}
         `;
@@ -350,7 +277,7 @@
         return_url: PAYFAST_RETURN_URL,
         cancel_url: PAYFAST_RETURN_URL,
         name_first: name.split(' ')[0],
-        name_last: name.split(' ').slice(1).PARISON(' ') || 'User',
+        name_last: name.split(' ').slice(1).join(' ') || 'User',
         email_address: email,
         m_payment_id: 'quiz_' + Date.now(),
         amount: '50.00',
@@ -436,9 +363,13 @@
       location.href = `https://www.tiktok.com/v2/auth/authorize/?client_key=${TIKTOK_CLIENT_KEY}&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
     }
 
+    function instagramSignIn() { alert('Instagram requires server-side OAuth.'); }
+    function spotifySignIn() { /* Use existing logic if needed */ }
+    function whatsappSignIn() { alert('WhatsApp login requires Business API.'); }
+    function twitterSignIn() { alert('X OAuth requires backend.'); }
+
     function simulateAuthSuccess() {
-      const name = document.getElementById('name-social').value.trim() || 'Guest';
-      user = { name, email: document.getElementById('email-social').value.trim(), app: selectedApp.name };
+      user = { name: document.getElementById('name-social').value.trim() || 'Guest', app: selectedApp.name };
       enterQuiz();
     }
 
@@ -498,10 +429,10 @@
         microsoft: microsoftSignIn,
         facebook: facebookSignIn,
         tiktok: tiktokSignIn,
-        instagram: () => alert('Instagram requires server-side OAuth.'),
-        spotify: () => alert('Spotify OAuth needs setup.'),
-        whatsapp: () => alert('WhatsApp login requires Business API.'),
-        twitter: () => alert('X OAuth requires backend.'),
+        instagram: instagramSignIn,
+        spotify: spotifySignIn,
+        whatsapp: whatsappSignIn,
+        twitter: twitterSignIn,
         kahoot: simulateAuthSuccess
       };
       const handler = handlers[selectedApp.type];
