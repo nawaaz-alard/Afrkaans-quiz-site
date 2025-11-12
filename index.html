@@ -4,311 +4,191 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Grade 8 Afrikaans Quiz</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- PayFast Onsite Engine -->
   <script src="https://www.payfast.co.za/onsite/engine.js"></script>
-  <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+  <!-- Apple Sign In -->
+  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
   <style>
-    body {font-family:Inter,sans-serif}
-    .signin-gate{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;justify-content:center;align-items:center;z-index:9999}
-    .signin-box{background:#fff;padding:2.5rem;border-radius:1rem;width:90%;max-width:500px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,.4)}
-    .app-select{display:flex;align-items:center;gap:12px;padding:14px;background:#f1f5f9;border-radius:10px;margin:10px 0;cursor:pointer;transition:.2s}
-    .app-select:hover{background:#e0e7ff}
-    .app-select.selected{background:#dbeafe;border:2px solid #3b82f6}
-    .payfast-btn{background:#ea580c;color:#fff;font-weight:bold;padding:14px;border-radius:10px;margin:15px 0;cursor:pointer}
-    .payfast-btn:hover{background:#c2410c}
-    .tab-btn{@apply px-4 py-2 font-medium border-b-2 transition}
-    .tab-btn.active{@apply border-indigo-600 text-indigo-600}
-    .tab-btn.inactive{@apply border-transparent text-gray-500}
-    .social-icons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:1rem}
-    .social-icon{width:48px;height:48px;border-radius:12px;background:#f8f9fa;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.1)}
-    .social-icon:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.15)}
-    .social-icon img{width:28px;height:28px;object-fit:contain}
-    .quiz-question{margin-bottom:1.5rem}
-    .option-btn{cursor:pointer;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;margin:0.5rem 0;transition:all .2s}
-    .option-btn:hover{background:#f3f4f6}
-    .option-btn.selected{background:#dbeafe;border-color:#3b82f6;color:#1e40af}
-    .option-btn.correct{background:#d1fae5;border-color:#10b981;color:#065f46}
-    .option-btn.incorrect{background:#fee2e2;border-color:#ef4444;color:#991b1b}
-    .progress-bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}
-    .progress-fill{height:100%;background:#4f46e5;transition:width .3s}
-    .timer{font-weight:bold;color:#7c3aed}
+    body { font-family: 'Inter', sans-serif; }
+    .signin-gate {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+      display: flex; justify-content: center; align-items: center; z-index: 9999;
+    }
+    .signin-box {
+      background: white; padding: 2.5rem; border-radius: 1rem;
+      width: 90%; max-width: 500px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    .app-select {
+      display: flex; align-items: center; gap: 12px; padding: 14px; background: #f1f5f9; border-radius: 10px; margin: 10px 0;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .app-select:hover { background: #e0e7ff; }
+    .app-select.selected { background: #dbeafe; border: 2px solid #3b82f6; }
+    .payfast-btn { background: #ea580c; color: white; font-weight: bold; padding: 14px; border-radius: 10px; margin: 15px 0; cursor: pointer; }
+    .payfast-btn:hover { background: #c2410c; }
+    .debug { @apply bg-red-100 text-red-800 p-4 rounded-lg text-center max-w-xl mx-auto mt-8 hidden; }
+    .tab-btn { @apply px-4 py-2 font-medium border-b-2 transition; }
+    .tab-btn.active { @apply border-indigo-600 text-indigo-600; }
+    .tab-btn.inactive { @apply border-transparent text-gray-500; }
+    .app-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (max-width: 480px) { .app-grid { grid-template-columns: 1fr; } }
+    .social-icons {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 1rem;
+    }
+    .social-icon {
+      width: 48px; height: 48px; border-radius: 12px; background: #f8f9fa; display: flex;
+      align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .social-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .social-icon img { width: 28px; height: 28px; object-fit: contain; }
   </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-  <!-- SIGN-IN GATE -->
+  <!-- Debug Fallback -->
+  <div id="fallback" class="debug">
+    <strong>Setup Required.</strong><br>
+    Add your PayFast & OAuth keys below.
+  </div>
+  <!-- SIGN-IN GATEWAY -->
   <div id="signin-gate" class="signin-gate">
     <div class="signin-box">
       <h2 class="text-2xl font-bold text-indigo-700 mb-2">Afrikaans Quiz</h2>
-      <p class="text-gray-600 mb-4">Pay <strong>R50</strong> or sign-in free (teachers)</p>
-      <!-- Tabs -->
+      <p class="text-gray-600 mb-4">Pay <strong>R50</strong> or sign in free (teachers)</p>
+      <!-- Tabs: Email | Social -->
       <div class="flex border-b mb-5">
-        <button id="tab-email" class="tab-btn active" onclick="switchTab('email')">Email &amp; Password</button>
+        <button id="tab-email" class="tab-btn active" onclick="switchTab('email')">Email & Password</button>
         <button id="tab-social" class="tab-btn inactive" onclick="switchTab('social')">Social Login</button>
       </div>
-      <!-- Email Tab -->
+      <!-- Email Login Tab -->
       <div id="email-tab" class="space-y-4">
-        <input type="text" id="name" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg"/>
-        <input type="email" id="email-input" placeholder="Email Address" class="w-full p-3 border border-blue-300 rounded-lg"/>
-        <input type="password" id="password" placeholder="Password" class="w-full p-3 border border-blue-300 rounded-lg"/>
+        <input type="text" id="name" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg" />
+        <input type="email" id="email-input" placeholder="Email Address" class="w-full p-3 border border-blue-300 rounded-lg" />
+        <input type="password" id="password" placeholder="Password" class="w-full p-3 border border-blue-300 rounded-lg" />
         <button onclick="emailLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">
           Sign In with Email
         </button>
-        <p class="text-xs text-gray-500">Demo: any email + password <code>demo</code></p>
-        <!-- ICONS (instant login) -->
+        <p class="text-xs text-gray-500">Demo: any email + password "demo"</p>
+        <!-- SOCIAL ICONS UNDER EMAIL BUTTON -->
         <div class="social-icons">
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[0])" title="Google"><img src="https://www.google.com/favicon.ico" alt="Google"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[1])" title="Apple"><img src="https://www.apple.com/favicon.ico" alt="Apple"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[2])" title="Microsoft"><img src="https://www.microsoft.com/favicon.ico" alt="Microsoft"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[3])" title="Facebook"><img src="https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico" alt="Facebook"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[4])" title="TikTok"><img src="https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico" alt="TikTok"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[5])" title="Instagram"><img src="https://www.instagram.com/static/images/ico/favicon-192.png" alt="Instagram"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[6])" title="Spotify"><img src="https://www.spotify.com/favicon.ico" alt="Spotify"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[7])" title="WhatsApp"><img src="https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png" alt="WhatsApp"></div>
-          <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[8])" title="X (Twitter)"><img src="https://abs.twimg.com/favicons/favicon.ico" alt="X"></div>
-          <div class="social-icon bg-emerald-100" onclick="selectAppAndStart(MEDIA_APPS[9])" title="Kahoot (Free)"><img src="https://kahoot.com/favicon.ico" alt="Kahoot"></div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[0])" title="Google">
+            <img src="https://www.google.com/favicon.ico" alt="Google">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[1])" title="Apple">
+            <img src="https://www.apple.com/favicon.ico" alt="Apple">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[2])" title="Microsoft">
+            <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[3])" title="Facebook">
+            <img src="https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico" alt="Facebook">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[4])" title="TikTok">
+            <img src="https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico" alt="TikTok">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[5])" title="Instagram">
+            <img src="https://www.instagram.com/static/images/ico/favicon-192.png" alt="Instagram">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[6])" title="Spotify">
+            <img src="https://www.spotify.com/favicon.ico" alt="Spotify">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[7])" title="WhatsApp">
+            <img src="https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png" alt="WhatsApp">
+          </div>
+          <div class="social-icon" onclick="loginWithApp(MEDIA_APPS[8])" title="X (Twitter)">
+            <img src="https://abs.twimg.com/favicons/favicon.ico" alt="X">
+          </div>
+          <div class="social-icon bg-emerald-100" onclick="loginWithApp(MEDIA_APPS[9])" title="Kahoot (Free)">
+            <img src="https://kahoot.com/favicon.ico" alt="Kahoot">
+          </div>
         </div>
         <p class="text-xs text-gray-400 mt-2">Or use full social login below</p>
       </div>
-      <!-- Social Tab -->
+      <!-- Social Login Tab -->
       <div id="social-tab" class="hidden space-y-4">
-        <input type="text" id="name-social" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg"/>
-        <input type="email" id="email-social" placeholder="Your Email (for receipt)" class="w-full p-3 border border-blue-300 rounded-lg mb-5"/>
+        <input type="text" id="name-social" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg" />
+        <input type="email" id="email-social" placeholder="Your Email (for receipt)" class="w-full p-3 border border-blue-300 rounded-lg mb-5" />
         <div id="app-list" class="grid grid-cols-2 gap-3 mb-6"></div>
         <div id="status" class="mb-4 text-sm font-medium"></div>
         <div id="payfast-container"></div>
-        <button id="login-btn" onclick="startLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700" disabled>
+        <button id="login-btn" onclick="startLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50" disabled>
           Continue
         </button>
       </div>
       <p class="text-xs text-gray-500 mt-4">PayFast: Cards, EFT, SnapScan, Zapper, PayPal</p>
     </div>
   </div>
-
-  <!-- QUIZ (hidden until login) -->
+  <!-- QUIZ -->
   <header class="bg-gradient-to-r from-sky-600 to-indigo-600 text-white p-5 shadow-lg">
-    <h1 class="container mx-auto text-2xl font-bold">Grade 8 Afrikaans — Quiz</h1>
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Grade 8 Afrikaans — Quiz</h1>
+    </div>
   </header>
-  <main id="quiz-main" class="container mx-auto p-6 grid lg:grid-cols-3 gap-6" style="display:none;">
-    <!-- Quiz Panel -->
-    <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 id="question-number" class="text-lg font-bold text-indigo-700">Question 1 of 15</h2>
-        <div class="flex items-center gap-3">
-          <span id="timer" class="timer">Time: 0:00</span>
-          <button onclick="resetQuiz()" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Reset</button>
+  <main id="quiz-main" class="container mx-auto p-6 grid lg:grid-cols-3 gap-6" style="display: none;">
+    <section class="lg:col-span-2">
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h2 class="text-xl font-semibold mb-6">Afrikaans Quiz (15 Questions)</h2>
+        <ol id="questions" class="space-y-6 list-decimal list-inside"></ol>
+        <div class="mt-8 flex gap-3">
+          <button onclick="submitQuiz()" class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+            Submit & Grade
+          </button>
+          <button onclick="resetQuiz()" class="px-5 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+            Reset
+          </button>
         </div>
+        <div id="score" class="mt-4 p-4 bg-emerald-50 rounded-lg font-medium" style="display:none;"></div>
       </div>
-      <div class="progress-bar mb-6"><div id="progress-fill" class="progress-fill w-0"></div></div>
-      <div id="question-container" class="quiz-question text-lg font-medium text-gray-800"></div>
-      <div id="options-container" class="space-y-2"></div>
-      <div class="flex justify-between mt-8">
-        <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 disabled:opacity-50" disabled>Previous</button>
-        <button id="next-btn" onclick="nextQuestion()" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Next</button>
-      </div>
-    </div>
+    </section>
 
-    <!-- Results & Leaderboard -->
-    <div class="space-y-6">
-      <div id="results-panel" class="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl shadow-md hidden">
-        <h3 class="text-xl font-bold text-indigo-700 mb-3">Your Score</h3>
-        <p id="score-display" class="text-3xl font-bold text-indigo-600">0 / 15</p>
-        <p id="percentage" class="text-lg text-gray-700"></p>
-        <button onclick="submitQuiz()" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Save & View Leaderboard</button>
+    <aside>
+      <div id="teacher" class="bg-white p-5 rounded-xl shadow-lg" style="display:none;">
+        <h3 class="font-semibold text-lg mb-3">Teacher Results</h3>
+        <button onclick="downloadCSV()" class="w-full mb-3 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700">
+          Download CSV
+        </button>
+        <div id="results" class="text-sm"></div>
       </div>
-
-      <div id="leaderboard" class="bg-white p-5 rounded-xl shadow-md">
-        <h3 class="text-xl font-bold text-indigo-700 mb-3">Top Scorers</h3>
-        <div id="leaderboard-list" class="space-y-2 text-sm"></div>
-        <button onclick="downloadCSV()" class="mt-4 w-full text-xs text-indigo-600 underline">Download CSV</button>
-      </div>
-    </div>
+    </aside>
   </main>
-
-  <!-- ====================== JS ====================== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script>
-    /* ---------- CONFIG ---------- */
+    // === CONFIG ===
     const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.googleusercontent.com';
-    const APPLE_CLIENT_ID = 'YOUR_APPLE_SERVICE_ID';
+    const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
     const MICROSOFT_CLIENT_ID = 'YOUR_MICROSOFT_CLIENT_ID';
+    const APPLE_CLIENT_ID = 'YOUR_APPLE_SERVICE_ID';
+    const APPLE_REDIRECT_URI = window.location.origin + window.location.pathname;
     const FACEBOOK_APP_ID = 'YOUR_FACEBOOK_APP_ID';
     const TIKTOK_CLIENT_KEY = 'YOUR_TIKTOK_CLIENT_KEY';
-    const REDIRECT_URI = location.origin + location.pathname;
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+    // PAYFAST CONFIG
     const PAYFAST_MERCHANT_ID = 'YOUR_MERCHANT_ID';
     const PAYFAST_MERCHANT_KEY = 'YOUR_MERCHANT_KEY';
     const PAYFAST_PASSPHRASE = 'YOUR_PASSPHRASE';
-    const PAYFAST_RETURN_URL = location.href;
+    const PAYFAST_RETURN_URL = window.location.href;
     const PAYFAST_SANDBOX = true;
 
+    // === 10 MOST USED MEDIA APPS (2025) ===
     const MEDIA_APPS = [
-      {name:'Google',type:'google',icon:'https://www.google.com/favicon.ico'},
-      {name:'Apple',type:'apple',icon:'https://www.apple.com/favicon.ico'},
-      {name:'Microsoft',type:'microsoft',icon:'https://www.microsoft.com/favicon.ico'},
-      {name:'Facebook',type:'facebook',icon:'https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico'},
-      {name:'TikTok',type:'tiktok',icon:'https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico'},
-      {name:'Instagram',type:'instagram',icon:'https://www.instagram.com/static/images/ico/favicon-192.png'},
-      {name:'Spotify',type:'spotify',icon:'https://www.spotify.com/favicon.ico'},
-      {name:'WhatsApp',type:'whatsapp',icon:'https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png'},
-      {name:'X (Twitter)',type:'twitter',icon:'https://abs.twimg.com/favicons/favicon.ico'},
-      {name:'Kahoot (Free)',type:'kahoot',icon:'https://kahoot.com/favicon.ico',free:true}
+      { name: 'Google', type: 'google', icon: 'https://www.google.com/favicon.ico' },
+      { name: 'Apple', type: 'apple', icon: 'https://www.apple.com/favicon.ico' },
+      { name: 'Microsoft', type: 'microsoft', icon: 'https://www.microsoft.com/favicon.ico' },
+      { name: 'Facebook', type: 'facebook', icon: 'https://static.xx.fbcdn.net/rsrc.php/yo/r/iRmz9ddfPH_.ico' },
+      { name: 'TikTok', type: 'tiktok', icon: 'https://lf16-tiktok-web.ttcdn.com/obj/tiktok-web/tiktok/favicon.ico' },
+      { name: 'Instagram', type: 'instagram', icon: 'https://www.instagram.com/static/images/ico/favicon-192.png' },
+      { name: 'Spotify', type: 'spotify', icon: 'https://www.spotify.com/favicon.ico' },
+      { name: 'WhatsApp', type: 'whatsapp', icon: 'https://static.whatsapp.net/rsrc.php/v3/y3/r/9QExiY_tO9X.png' },
+      { name: 'X (Twitter)', type: 'twitter', icon: 'https://abs.twimg.com/favicons/favicon.ico' },
+      { name: 'Kahoot (Free)', type: 'kahoot', icon: 'https://kahoot.com/favicon.ico', free: true }
     ];
 
-    let user = null, selectedApp = null;
-    let currentQuestion = 0;
-    let answers = [];
-    let timerInterval, startTime;
+    let answers = {}, user = null, selectedApp = null;
 
-    /* ---------- MOCK QUESTIONS (Grade 8 Afrikaans) ---------- */
-    const MOCK_QUESTIONS = [
-      {q: "Wat is die korrekte vorm van die werkwoord in die sin: 'Ek ___ (gaan) skool toe.'?", a: "gaan", o: ["gaan", "ging", "gegaan", "ga"]},
-      {q: "Watter woord is 'n selfstandige naamwoord?", a: "hond", o: ["hardloop", "hond", "vinnig", "blou"]},
-      {q: "Wat is die meervoud van 'kind'?", a: "kinders", o: ["kinder", "kinders", "kinds", "kindes"]},
-      {q: "Kies die korrekte sin:", a: "Die kat sit op die mat.", o: ["Die kat sit op die mat.", "Die kat sit op die mat", "Die kat sit op die mat?", "Die kat sit op die mat!"]},
-      {q: "Wat is die teenwoordige tyd van 'was'?", a: "is", o: ["was", "is", "sal wees", "gewees het"]},
-      {q: "Watter woord is 'n byvoeglike naamwoord?", a: "mooi", o: ["hardloop", "mooi", "hond", "en"]},
-      {q: "Wat is die verkleinwoord van 'huis'?", a: "huisie", o: ["huisjie", "huisie", "huiskie", "huisies"]},
-      {q: "Kies die korrekte voegwoord:", a: "omdat", o: ["en", "maar", "omdat", "of"]},
-      {q: "Wat beteken 'uitstekend'?", a: "baie goed", o: ["baie sleg", "baie goed", "normaal", "onbekend"]},
-      {q: "Watter sin is in die verlede tyd?", a: "Ek het geloop.", o: ["Ek loop.", "Ek sal loop.", "Ek het geloop.", "Ek loop nou."]},
-      {q: "Wat is die korrekte spelling?", a: "biblioteek", o: ["bibliotheek", "biblioteek", "bibliohteek", "bibloteek"]},
-      {q: "Watter woord is 'n werkwoord?", a: "sing", o: ["sing", "lied", "mooi", "vinnig"]},
-      {q: "Wat is die vroulike vorm van 'seun'?", a: "meisie", o: ["seun", "meisie", "man", "vrou"]},
-      {q: "Kies die korrekte leesteken:", a: "Ek hou van appelkoos, peer en druiwe.", o: ["Ek hou van appelkoos peer en druiwe.", "Ek hou van appelkoos, peer en druiwe.", "Ek hou van appelkoos; peer en druiwe.", "Ek hou van appelkoos peer, en druiwe."]},
-      {q: "Wat is die korrekte volgorde?", a: "Jan, Piet en Susan", o: ["Jan Piet en Susan", "Jan, Piet en Susan", "Jan; Piet en Susan", "Jan Piet, en Susan"]}
-    ];
-
-    /* ---------- QUIZ RENDERING ---------- */
-    function renderQuiz() {
-      answers = Array(MOCK_QUESTIONS.length).fill(null);
-      currentQuestion = 0;
-      startTimer();
-      showQuestion();
-      updateProgress();
-      loadMockResults();
-    }
-
-    function showQuestion() {
-      const q = MOCK_QUESTIONS[currentQuestion];
-      document.getElementById('question-number').textContent = `Question ${currentQuestion + 1} of ${MOCK_QUESTIONS.length}`;
-      document.getElementById('question-container').textContent = q.q;
-
-      const optionsDiv = document.getElementById('options-container');
-      optionsDiv.innerHTML = '';
-      q.o.forEach((opt, i) => {
-        const btn = document.createElement('div');
-        btn.className = 'option-btn';
-        btn.textContent = opt;
-        btn.onclick = () => selectOption(i);
-        if (answers[currentQuestion] === i) {
-          btn.classList.add(answers[currentQuestion] === q.o.indexOf(q.a) ? 'correct' : 'incorrect');
-        }
-        optionsDiv.appendChild(btn);
-      });
-
-      document.getElementById('prev-btn').disabled = currentQuestion === 0;
-      document.getElementById('next-btn').textContent = currentQuestion === MOCK_QUESTIONS.length - 1 ? 'Finish' : 'Next';
-      document.getElementById('results-panel').classList.add('hidden');
-    }
-
-    function selectOption(index) {
-      answers[currentQuestion] = index;
-      const buttons = document.querySelectorAll('#options-container .option-btn');
-      buttons.forEach((b, i) => {
-        b.classList.remove('selected');
-        if (i === index) b.classList.add('selected');
-      });
-    }
-
-    function nextQuestion() {
-      if (currentQuestion < MOCK_QUESTIONS.length - 1) {
-        currentQuestion++;
-        showQuestion();
-        updateProgress();
-      } else {
-        finishQuiz();
-      }
-    }
-
-    function prevQuestion() {
-      if (currentQuestion > 0) {
-        currentQuestion--;
-        showQuestion();
-        updateProgress();
-      }
-    }
-
-    function updateProgress() {
-      const progress = ((currentQuestion + 1) / MOCK_QUESTIONS.length) * 100;
-      document.getElementById('progress-fill').style.width = progress + '%';
-    }
-
-    function startTimer() {
-      startTime = Date.now();
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-        const secs = String(elapsed % 60).padStart(2, '0');
-        document.getElementById('timer').textContent = `Time: ${mins}:${secs}`;
-      }, 1000);
-    }
-
-    function finishQuiz() {
-      clearInterval(timerInterval);
-      const correct = answers.reduce((c, a, i) => c + (a === MOCK_QUESTIONS[i].o.indexOf(MOCK_QUESTIONS[i].a) ? 1 : 0), 0);
-      document.getElementById('score-display').textContent = `${correct} / ${MOCK_QUESTIONS.length}`;
-      document.getElementById('percentage').textContent = `${Math.round((correct / MOCK_QUESTIONS.length) * 100)}%`;
-      document.getElementById('results-panel').classList.remove('hidden');
-    }
-
-    function submitQuiz() {
-      const correct = answers.filter((a, i) => a === MOCK_QUESTIONS[i].o.indexOf(MOCK_QUESTIONS[i].a)).length;
-      const score = {name: user.name, score: correct, total: MOCK_QUESTIONS.length, date: new Date().toLocaleDateString()};
-      addMockResult(score);
-      loadMockResults();
-      alert(`Quiz saved! You scored ${correct}/${MOCK_QUESTIONS.length}`);
-    }
-
-    function resetQuiz() {
-      if (confirm('Are you sure you want to reset?')) {
-        renderQuiz();
-      }
-    }
-
-    /* ---------- MOCK RESULTS ---------- */
-    let mockResults = JSON.parse(localStorage.getItem('mock_results') || '[]');
-
-    function addMockResult(score) {
-      mockResults.push(score);
-      mockResults.sort((a, b) => b.score - a.score);
-      mockResults = mockResults.slice(0, 10);
-      localStorage.setItem('mock_results', JSON.stringify(mockResults));
-    }
-
-    function loadMockResults() {
-      const list = document.getElementById('leaderboard-list');
-      list.innerHTML = mockResults.length ? '' : '<p class="text-gray-500 text-center">No scores yet</p>';
-      mockResults.forEach((r, i) => {
-        const div = document.createElement('div');
-        div.className = 'flex justify-between items-center py-2 border-b';
-        div.innerHTML = `<span class="font-medium">${i+1}. ${r.name}</span>
-                         <span class="text-indigo-600 font-bold">${r.score}/${r.total}</span>`;
-        list.appendChild(div);
-      });
-    }
-
-    function downloadCSV() {
-      if (!mockResults.length) return alert('No data to export');
-      let csv = 'Name,Score,Total,Date\n';
-      mockResults.forEach(r => csv += `${r.name},${r.score},${r.total},${r.date}\n`);
-      const blob = new Blob([csv], {type: 'text/csv'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'afrikaans_quiz_leaderboard.csv';
-      a.click();
-    }
-
-    /* ---------- LOGIN SYSTEM (unchanged) ---------- */
+    // === HELPER: Click icon → select app + start login ===
     function selectAppAndStart(app) {
       selectedApp = app;
       document.getElementById('name-social').value = document.getElementById('name').value.trim();
@@ -317,31 +197,46 @@
       setTimeout(() => selectApp(app), 50);
     }
 
+    // === TAB SWITCHING ===
     function switchTab(tab) {
-      const email = document.getElementById('email-tab');
-      const social = document.getElementById('social-tab');
-      const btnE = document.getElementById('tab-email');
-      const btnS = document.getElementById('tab-social');
+      const emailTab = document.getElementById('email-tab');
+      const socialTab = document.getElementById('social-tab');
+      const emailBtn = document.getElementById('tab-email');
+      const socialBtn = document.getElementById('tab-social');
       if (tab === 'email') {
-        email.classList.remove('hidden'); social.classList.add('hidden');
-        btnE.classList.add('active'); btnE.classList.remove('inactive');
-        btnS.classList.add('inactive'); btnS.classList.remove('active');
+        emailTab.classList.remove('hidden');
+        socialTab.classList.add('hidden');
+        emailBtn.classList.add('active'); emailBtn.classList.remove('inactive');
+        socialBtn.classList.add('inactive'); socialBtn.classList.remove('active');
       } else {
-        email.classList.add('hidden'); social.classList.remove('hidden');
-        btnE.classList.add('inactive'); btnE.classList.remove('active');
-        btnS.classList.add('active'); btnS.classList.remove('inactive');
+        emailTab.classList.add('hidden');
+        socialTab.classList.remove('hidden');
+        emailBtn.classList.add('inactive'); emailBtn.classList.remove('active');
+        socialBtn.classList.add('active'); socialBtn.classList.remove('inactive');
       }
     }
 
+    // === EMAIL LOGIN (DEMO) ===
+    function emailLogin() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email-input').value.trim();
+      const password = document.getElementById('password').value;
+      if (!name || !email || !password) return alert('All fields required');
+      if (password !== 'demo') return alert('Password: "demo" (for testing)');
+      user = { name, email, app: 'Email' };
+      enterQuiz();
+    }
+
+    // === RENDER SOCIAL APPS (GRID) ===
     function renderAppList() {
       const list = document.getElementById('app-list');
       list.innerHTML = '';
       MEDIA_APPS.forEach(app => {
         const div = document.createElement('div');
         div.className = 'app-select';
-        div.onclick = () => selectApp(app);
+        div.onclick = () => selectApp(app, div);
         div.innerHTML = `
-          <img src="${app.icon}" class="w-6 h-6 rounded" alt="">
+          <img src="${app.icon}" class="w-6 h-6 rounded" alt="${app.name} icon" loading="lazy">
           <div class="flex-1 text-left font-medium">${app.name}</div>
           ${app.free ? '<span class="text-xs text-emerald-600">Free</span>' : ''}
         `;
@@ -349,74 +244,203 @@
       });
     }
 
-    function selectApp(app) {
-      document.querySelectorAll('.app-select').forEach(e => e.classList.remove('selected'));
-      event.target.closest('.app-select').classList.add('selected');
+    function selectApp(app, element) {
+      document.querySelectorAll('.app-select').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
       selectedApp = app;
       document.getElementById('login-btn').disabled = false;
       document.getElementById('status').innerHTML = `<span class="text-blue-600">Selected: ${app.name}</span>`;
-      const pc = document.getElementById('payfast-container');
+      const payfast = document.getElementById('payfast-container');
       if (app.free) {
-        pc.innerHTML = '<p class="text-emerald-600 font-medium">Free access!</p>';
-        setTimeout(startLogin, 300);
+        payfast.innerHTML = '<p class="text-emerald-600 font-medium">Free access!</p>';
+        document.getElementById('login-btn').textContent = 'Sign In Free';
+        document.getElementById('login-btn').disabled = false;
+        // Auto-login if name/email filled, or prompt
+        if (document.getElementById('name-social').value.trim() && document.getElementById('email-social').value.trim()) {
+          setTimeout(startLogin, 300);
+        } else {
+          alert('Please fill your name and email to sign in free with Kahoot.');
+        }
       } else {
-        pc.innerHTML = `<div class="payfast-btn" onclick="startPayFast()">Pay R50 with PayFast</div>`;
+        payfast.innerHTML = `
+          <div class="payfast-btn" onclick="startPayFast()">
+            Pay R50 with PayFast
+          </div>
+        `;
+        document.getElementById('login-btn').textContent = 'Continue with ' + app.name;
       }
     }
 
-    function emailLogin() {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email-input').value.trim();
-      const pw = document.getElementById('password').value;
-      if (!name || !email || !pw) return alert('All fields required');
-      if (pw !== 'demo') return alert('Password: "demo" (demo mode)');
-      user = {name, email, app:'Email'};
-      enterQuiz();
-    }
-
+    // === PAYFAST ===
     function startPayFast() {
       const name = document.getElementById('name-social').value.trim();
       const email = document.getElementById('email-social').value.trim();
       if (!name || !email) return alert('Name & Email required');
       const data = {
-        merchant_id: PAYFAST_MERCHANT_ID, merchant_key: PAYFAST_MERCHANT_KEY,
-        return_url: PAYFAST_RETURN_URL, cancel_url: PAYFAST_RETURN_URL,
-        name_first: name.split(' ')[0], name_last: name.split(' ').slice(1).join(' ') || 'User',
-        email_address: email, m_payment_id: 'quiz_' + Date.now(), amount: '50.00',
-        item_name: 'Grade 8 Afrikaans Quiz', custom_str1: selectedApp.type,
-        custom_str2: btoa(email), passphrase: PAYFAST_PASSPHRASE
+        merchant_id: PAYFAST_MERCHANT_ID,
+        merchant_key: PAYFAST_MERCHANT_KEY,
+        return_url: PAYFAST_RETURN_URL,
+        cancel_url: PAYFAST_RETURN_URL,
+        name_first: name.split(' ')[0],
+        name_last: name.split(' ').slice(1).join(' ') || 'User',
+        email_address: email,
+        m_payment_id: 'quiz_' + Date.now(),
+        amount: '50.00',
+        item_name: 'Grade 8 Afrikaans Quiz',
+        custom_str1: selectedApp.type,
+        custom_str2: btoa(email),
+        passphrase: PAYFAST_PASSPHRASE
       };
-      let str = ''; for (const k in data) if (data[k] && k !== 'signature') str += `${k}=${encodeURIComponent(data[k]).replace(/%20/g,'+')}&`;
-      str = str.slice(0, -1); data.signature = CryptoJS.MD5(str).toString();
-      new PayFast.Onsite(data).open(PAYFAST_SANDBOX);
+      let pfParamString = '';
+      for (let key in data) {
+        if (data[key] && key !== 'signature') {
+          pfParamString += `${key}=${encodeURIComponent(data[key]).replace(/%20/g, '+')}&`;
+        }
+      }
+      pfParamString = pfParamString.slice(0, -1);
+      data.signature = CryptoJS.MD5(pfParamString).toString();
+      const pf = new PayFast.Onsite(data);
+      pf.open(PAYFAST_SANDBOX);
     }
 
-    function googleSignIn() { if(GOOGLE_CLIENT_ID.includes('YOUR_')) return simulate(); }
-    function appleSignIn() { if(APPLE_CLIENT_ID.includes('YOUR_')) return simulate(); }
-    function microsoftSignIn(){}
-    function facebookSignIn() { if(FACEBOOK_APP_ID.includes('YOUR_')) return simulate(); }
-    function tiktokSignIn() { if(TIKTOK_CLIENT_KEY.includes('YOUR_')) return simulate(); }
+    function handlePayFastReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const paymentStatus = params.get('payment_status');
+      const pfPaymentId = params.get('pf_payment_id');
+      if (pfPaymentId && paymentStatus === 'COMPLETE') {
+        const name = document.getElementById('name-social').value.trim() || 'Paid User';
+        const email = atob(params.get('custom_str2') || '');
+        user = { name, email, app: params.get('custom_str1') || 'PayFast' };
+        enterQuiz();
+      }
+    }
 
-    function simulate() {
-      user = {
-        name: document.getElementById('name-social').value || 'Guest',
-        email: document.getElementById('email-social').value || '',
-        app: selectedApp.name
-      };
+    // === OAUTH HANDLERS ===
+    function googleSignIn() {
+      if (GOOGLE_CLIENT_ID.includes('YOUR_')) return simulateAuthSuccess();
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: r => {
+          fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${r.credential}`)
+            .then(x => x.json())
+            .then(d => { user = { name: d.name, email: d.email, app: 'Google' }; enterQuiz(); })
+            .catch(simulateAuthSuccess);
+        }
+      });
+      google.accounts.id.prompt();
+    }
+
+    function appleSignIn() {
+      if (APPLE_CLIENT_ID.includes('YOUR_')) return simulateAuthSuccess();
+      AppleID.auth.init({
+        clientId: APPLE_CLIENT_ID,
+        scope: 'name email',
+        redirectURI: APPLE_REDIRECT_URI,
+        usePopup: true
+      });
+      AppleID.auth.signIn().then(response => {
+        user = { name: response.user?.name || 'Apple User', email: response.user?.email || 'hidden@apple.com', app: 'Apple' };
+        enterQuiz();
+      }).catch(simulateAuthSuccess);
+    }
+
+    function microsoftSignIn() {
+      const v = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).slice(0,43);
+      localStorage.setItem('ms_pkce', v);
+      location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=User.Read&code_challenge=${v}&code_challenge_method=plain&prompt=select_account`;
+    }
+
+    function facebookSignIn() {
+      if (FACEBOOK_APP_ID.includes('YOUR_')) return simulateAuthSuccess();
+      FB.login(response => {
+        if (response.authResponse) {
+          FB.api('/me', { fields: 'name,email' }, d => {
+            user = { name: d.name, email: d.email || 'fbuser@facebook.com', app: 'Facebook' };
+            enterQuiz();
+          });
+        } else simulateAuthSuccess();
+      }, { scope: 'public_profile,email' });
+    }
+
+    function tiktokSignIn() {
+      if (TIKTOK_CLIENT_KEY.includes('YOUR_')) return simulateAuthSuccess();
+      const state = btoa(Math.random()).slice(0, 16);
+      location.href = `https://www.tiktok.com/v2/auth/authorize/?client_key=${TIKTOK_CLIENT_KEY}&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
+    }
+
+    function simulateAuthSuccess() {
+      user = { name: document.getElementById('name-social').value.trim() || 'Guest', app: selectedApp.name };
+      enterQuiz();
+    }
+
+    function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (code && selectedApp) {
+        if (selectedApp.type === 'spotify') exchangeSpotifyCode(code);
+        else if (selectedApp.type === 'microsoft') exchangeMicrosoftCode(code);
+      }
+    }
+
+    async function exchangeSpotifyCode(code) {
+      const verifier = localStorage.getItem('pkce_verifier');
+      const res = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, code_verifier: verifier })
+      });
+      const data = await res.json();
+      if (data.access_token) verifySpotifyToken(data.access_token);
+    }
+
+    async function verifySpotifyToken(token) {
+      const res = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      user = { name: data.display_name || 'Spotify User', email: data.email, app: 'Spotify' };
+      enterQuiz();
+    }
+
+    async function exchangeMicrosoftCode(code) {
+      const verifier = localStorage.getItem('ms_pkce');
+      const res = await fetch(`https://login.microsoftonline.com/common/oauth2/v2.0/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: MICROSOFT_CLIENT_ID, grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, code_verifier: verifier })
+      });
+      const data = await res.json();
+      if (data.access_token) verifyMicrosoftToken(data.access_token);
+    }
+
+    async function verifyMicrosoftToken(token) {
+      const res = await fetch('https://graph.microsoft.com/v1.0/me', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      user = { name: data.displayName || 'Microsoft User', email: data.mail || data.userPrincipalName, app: 'Microsoft' };
       enterQuiz();
     }
 
     function startLogin() {
       const name = document.getElementById('name-social').value.trim();
       if (!name) return alert('Please enter your name');
-      if (selectedApp.free) { simulate(); return; }
-      const map = {google:googleSignIn, apple:appleSignIn, microsoft:microsoftSignIn, facebook:facebookSignIn, tiktok:tiktokSignIn};
-      const fn = map[selectedApp.type];
-      if (fn) fn(); else simulate();
+      if (selectedApp.free) { simulateAuthSuccess(); return; }
+      const handlers = {
+        google: googleSignIn,
+        apple: appleSignIn,
+        microsoft: microsoftSignIn,
+        facebook: facebookSignIn,
+        tiktok: tiktokSignIn,
+        instagram: () => alert('Instagram requires server-side OAuth.'),
+        spotify: () => alert('Spotify OAuth needs setup.'),
+        whatsapp: () => alert('WhatsApp login requires Business API.'),
+        twitter: () => alert('X OAuth requires backend.'),
+        kahoot: simulateAuthSuccess
+      };
+      const handler = handlers[selectedApp.type];
+      if (handler) handler();
     }
 
+    // === ENTER QUIZ ===
     function enterQuiz() {
-      history.replaceState(null,'',location.pathname);
+      history.replaceState(null, '', window.location.pathname);
       document.getElementById('signin-gate').remove();
       document.getElementById('quiz-main').style.display = 'grid';
       showBanner();
@@ -431,10 +455,119 @@
       document.body.appendChild(b);
     }
 
-    /* ---------- INIT ---------- */
+    // === 15 QUESTIONS ===
+    const MOCK_QUESTIONS = [
+      { id: 'q1', prompt: ' dapper — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'courageous' },
+      { id: 'q2', prompt: ' gemeenskap — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'society' },
+      { id: 'q3', prompt: ' gevaarlik — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'perilous' },
+      { id: 'q4', prompt: ' ongelykheid — (choose)', type: 'select', options: ['courageous','society','perilous','disparity'], answer: 'disparity' },
+      { id: 'q5', prompt: " What happened to Lungile's dog?", type: 'short', answer: "in die swembad geval" },
+      { id: 'q6', prompt: " Hierdie hond is _____ as daardie een.", type: 'select', options: ['mooi','mooier','mooiste'], answer: 'mooier' },
+      { id: 'q7', prompt: " Translate: Die meisie is dapper en slim.", type: 'short', answer: "the girl is brave and clever" },
+      { id: 'q8', prompt: " Wat is die meervoud van 'kind'?", type: 'short', answer: "kinders" },
+      { id: 'q9', prompt: " Kies die korrekte vorm: Hy _____ (loop) vinnig.", type: 'select', options: ['loop','loopte','loopt'], answer: 'loop' },
+      { id: 'q10', prompt: " Wat beteken 'uitstekend'?", type: 'short', answer: "excellent" },
+      { id: 'q11', prompt: " Vertaal: The teacher is strict.", type: 'short', answer: "die onderwyser is streng" },
+      { id: 'q12', prompt: " Wat is die teenwoordige tyd van 'was'?", type: 'short', answer: "is" },
+      { id: 'q13', prompt: " Kies die korrekte byvoeglike naamwoord: Die _____ huis.", type: 'select', options: ['groot','groter','grootste'], answer: 'groot' },
+      { id: 'q14', prompt: " Wat is die vroulike vorm van 'seun'?", type: 'short', answer: "meisie" },
+      { id: 'q15', prompt: " Vertaal: We are going to the beach.", type: 'short', answer: "ons gaan na die strand" }
+    ];
+
+    function renderQuiz() {
+      const ol = document.getElementById('questions');
+      ol.innerHTML = '';
+      MOCK_QUESTIONS.forEach(q => {
+        const li = document.createElement('li');
+        li.className = 'space-y-2';
+        li.innerHTML = `<div class="font-medium">${q.prompt}</div>`;
+        if (q.type === 'short') {
+          const input = document.createElement('input');
+          input.type = 'text'; input.placeholder = 'Jou antwoord...';
+          input.className = 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500';
+          input.oninput = e => answers[q.id] = e.target.value;
+          li.appendChild(input);
+        } else {
+          const select = document.createElement('select');
+          select.className = 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500';
+          select.add(new Option('-- Kies --', ''));
+          q.options.forEach(o => select.add(new Option(o, o)));
+          select.onchange = e => answers[q.id] = e.target.value;
+          li.appendChild(select);
+        }
+        ol.appendChild(li);
+      });
+    }
+
+    function submitQuiz() {
+      let correct = 0;
+      MOCK_QUESTIONS.forEach(q => {
+        const expected = (q.answer || '').trim().toLowerCase();
+        const got = (answers[q.id] || '').trim().toLowerCase();
+        if (got && (got === expected || expected.includes(got))) correct++;
+      });
+      const scoreEl = document.getElementById('score');
+      scoreEl.innerHTML = `<strong>Score:</strong> ${correct} / ${MOCK_QUESTIONS.length}`;
+      scoreEl.style.display = 'block';
+      addMockResult(correct);
+    }
+
+    function resetQuiz() {
+      answers = {};
+      document.getElementById('score').style.display = 'none';
+      renderQuiz();
+    }
+
+    let mockResults = JSON.parse(localStorage.getItem('mock_results') || '[]');
+    function addMockResult(score) {
+      const r = { name: user.name, app: user.app, correct: score, total: MOCK_QUESTIONS.length, time: new Date().toISOString() };
+      mockResults.push(r);
+      localStorage.setItem('mock_results', JSON.stringify(mockResults));
+      loadMockResults();
+    }
+
+    function loadMockResults() {
+      const div = document.getElementById('results');
+      if (!mockResults.length) { div.innerHTML = '<p class="text-gray-500">No results yet.</p>'; return; }
+      let table = `<table class="w-full text-left text-sm"><thead><tr class="border-b"><th>Name</th><th>App</th><th>Score</th><th>Time</th></tr></thead><tbody>`;
+      mockResults.forEach(r => table += `<tr class="border-b"><td>${r.name}</td><td>${r.app}</td><td>${r.correct}/${r.total}</td><td class="text-xs">${new Date(r.time).toLocaleString()}</td></tr>`);
+      table += `</tbody></table>`;
+      div.innerHTML = table;
+      document.getElementById('teacher').style.display = 'block';
+    }
+
+    function downloadCSV() {
+      if (!mockResults.length) return alert('No data');
+      let csv = 'Name,App,Correct,Total,Time\n';
+      mockResults.forEach(r => csv += `"${r.name}","${r.app}",${r.correct},${r.total},"${r.time}"\n`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+      a.download = 'afrikaans_results.csv'; a.click();
+    }
+
+    // === INIT ===
     window.addEventListener('load', () => {
+      handleCallback();
+      handlePayFastReturn();
       renderAppList();
+      document.getElementById('fallback').classList.add('hidden');
+
+      // Load Facebook SDK
+      window.fbAsyncInit = function() {
+        FB.init({ appId: FACEBOOK_APP_ID, xfbml: true, version: 'v20.0' });
+      };
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
     });
   </script>
+  <!-- CryptoJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <!-- Facebook SDK Root -->
+  <div id="fb-root"></div>
 </body>
 </html>
