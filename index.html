@@ -8,7 +8,6 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://www.payfast.co.za/onsite/engine.js"></script>
   <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
-
   <style>
     body {font-family:Inter,sans-serif}
     .signin-gate{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;justify-content:center;align-items:center;z-index:9999}
@@ -25,35 +24,39 @@
     .social-icon{width:48px;height:48px;border-radius:12px;background:#f8f9fa;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.1)}
     .social-icon:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.15)}
     .social-icon img{width:28px;height:28px;object-fit:contain}
+    .quiz-question{margin-bottom:1.5rem}
+    .option-btn{cursor:pointer;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;margin:0.5rem 0;transition:all .2s}
+    .option-btn:hover{background:#f3f4f6}
+    .option-btn.selected{background:#dbeafe;border-color:#3b82f6;color:#1e40af}
+    .option-btn.correct{background:#d1fae5;border-color:#10b981;color:#065f46}
+    .option-btn.incorrect{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+    .progress-bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+    .progress-fill{height:100%;background:#4f46e5;transition:width .3s}
+    .timer{font-weight:bold;color:#7c3aed}
   </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-
   <!-- SIGN-IN GATE -->
   <div id="signin-gate" class="signin-gate">
     <div class="signin-box">
       <h2 class="text-2xl font-bold text-indigo-700 mb-2">Afrikaans Quiz</h2>
       <p class="text-gray-600 mb-4">Pay <strong>R50</strong> or sign-in free (teachers)</p>
-
       <!-- Tabs -->
       <div class="flex border-b mb-5">
-        <button id="tab-email"   class="tab-btn active"   onclick="switchTab('email')">Email &amp; Password</button>
-        <button id="tab-social"  class="tab-btn inactive" onclick="switchTab('social')">Social Login</button>
+        <button id="tab-email" class="tab-btn active" onclick="switchTab('email')">Email &amp; Password</button>
+        <button id="tab-social" class="tab-btn inactive" onclick="switchTab('social')">Social Login</button>
       </div>
-
       <!-- Email Tab -->
       <div id="email-tab" class="space-y-4">
-        <input type="text"     id="name"        placeholder="Your Name"    class="w-full p-3 border border-blue-300 rounded-lg"/>
-        <input type="email"    id="email-input" placeholder="Email Address"class="w-full p-3 border border-blue-300 rounded-lg"/>
-        <input type="password" id="password"   placeholder="Password"     class="w-full p-3 border border-blue-300 rounded-lg"/>
+        <input type="text" id="name" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg"/>
+        <input type="email" id="email-input" placeholder="Email Address" class="w-full p-3 border border-blue-300 rounded-lg"/>
+        <input type="password" id="password" placeholder="Password" class="w-full p-3 border border-blue-300 rounded-lg"/>
         <button onclick="emailLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">
           Sign In with Email
         </button>
         <p class="text-xs text-gray-500">Demo: any email + password <code>demo</code></p>
-
         <!-- ICONS (instant login) -->
         <div class="social-icons">
-          <!-- each icon calls selectAppAndStart() -->
           <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[0])" title="Google"><img src="https://www.google.com/favicon.ico" alt="Google"></div>
           <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[1])" title="Apple"><img src="https://www.apple.com/favicon.ico" alt="Apple"></div>
           <div class="social-icon" onclick="selectAppAndStart(MEDIA_APPS[2])" title="Microsoft"><img src="https://www.microsoft.com/favicon.ico" alt="Microsoft"></div>
@@ -67,21 +70,17 @@
         </div>
         <p class="text-xs text-gray-400 mt-2">Or use full social login below</p>
       </div>
-
       <!-- Social Tab -->
       <div id="social-tab" class="hidden space-y-4">
-        <input type="text"  id="name-social"  placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg"/>
+        <input type="text" id="name-social" placeholder="Your Name" class="w-full p-3 border border-blue-300 rounded-lg"/>
         <input type="email" id="email-social" placeholder="Your Email (for receipt)" class="w-full p-3 border border-blue-300 rounded-lg mb-5"/>
         <div id="app-list" class="grid grid-cols-2 gap-3 mb-6"></div>
         <div id="status" class="mb-4 text-sm font-medium"></div>
         <div id="payfast-container"></div>
-
-        <!-- LOGIN BUTTON – ALWAYS ENABLED AFTER SELECTION -->
         <button id="login-btn" onclick="startLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700" disabled>
           Continue
         </button>
       </div>
-
       <p class="text-xs text-gray-500 mt-4">PayFast: Cards, EFT, SnapScan, Zapper, PayPal</p>
     </div>
   </div>
@@ -91,26 +90,58 @@
     <h1 class="container mx-auto text-2xl font-bold">Grade 8 Afrikaans — Quiz</h1>
   </header>
   <main id="quiz-main" class="container mx-auto p-6 grid lg:grid-cols-3 gap-6" style="display:none;">
-    … (your quiz HTML – unchanged) …
+    <!-- Quiz Panel -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="question-number" class="text-lg font-bold text-indigo-700">Question 1 of 15</h2>
+        <div class="flex items-center gap-3">
+          <span id="timer" class="timer">Time: 0:00</span>
+          <button onclick="resetQuiz()" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Reset</button>
+        </div>
+      </div>
+      <div class="progress-bar mb-6"><div id="progress-fill" class="progress-fill w-0"></div></div>
+      <div id="question-container" class="quiz-question text-lg font-medium text-gray-800"></div>
+      <div id="options-container" class="space-y-2"></div>
+      <div class="flex justify-between mt-8">
+        <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 disabled:opacity-50" disabled>Previous</button>
+        <button id="next-btn" onclick="nextQuestion()" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Next</button>
+      </div>
+    </div>
+
+    <!-- Results & Leaderboard -->
+    <div class="space-y-6">
+      <div id="results-panel" class="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl shadow-md hidden">
+        <h3 class="text-xl font-bold text-indigo-700 mb-3">Your Score</h3>
+        <p id="score-display" class="text-3xl font-bold text-indigo-600">0 / 15</p>
+        <p id="percentage" class="text-lg text-gray-700"></p>
+        <button onclick="submitQuiz()" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Save & View Leaderboard</button>
+      </div>
+
+      <div id="leaderboard" class="bg-white p-5 rounded-xl shadow-md">
+        <h3 class="text-xl font-bold text-indigo-700 mb-3">Top Scorers</h3>
+        <div id="leaderboard-list" class="space-y-2 text-sm"></div>
+        <button onclick="downloadCSV()" class="mt-4 w-full text-xs text-indigo-600 underline">Download CSV</button>
+      </div>
+    </div>
   </main>
 
-  <!-- ======================  JS  ====================== -->
+  <!-- ====================== JS ====================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script>
     /* ---------- CONFIG ---------- */
     const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.googleusercontent.com';
-    const APPLE_CLIENT_ID   = 'YOUR_APPLE_SERVICE_ID';
+    const APPLE_CLIENT_ID = 'YOUR_APPLE_SERVICE_ID';
     const MICROSOFT_CLIENT_ID = 'YOUR_MICROSOFT_CLIENT_ID';
-    const FACEBOOK_APP_ID   = 'YOUR_FACEBOOK_APP_ID';
+    const FACEBOOK_APP_ID = 'YOUR_FACEBOOK_APP_ID';
     const TIKTOK_CLIENT_KEY = 'YOUR_TIKTOK_CLIENT_KEY';
     const REDIRECT_URI = location.origin + location.pathname;
+    const PAYFAST_MERCHANT_ID = 'YOUR_MERCHANT_ID';
+    const PAYFAST_MERCHANT_KEY = 'YOUR_MERCHANT_KEY';
+    const PAYFAST_PASSPHRASE = 'YOUR_PASSPHRASE';
+    const PAYFAST_RETURN_URL = location.href;
+    const PAYFAST_SANDBOX = true;
 
-    const PAYFAST_MERCHANT_ID   = 'YOUR_MERCHANT_ID';
-    const PAYFAST_MERCHANT_KEY  = 'YOUR_MERCHANT_KEY';
-    const PAYFAST_PASSPHRASE    = 'YOUR_PASSPHRASE';
-    const PAYFAST_RETURN_URL    = location.href;
-    const PAYFAST_SANDBOX       = true;
-
-    const MEDIA_APPS = [ /* same 10 apps as before */ 
+    const MEDIA_APPS = [
       {name:'Google',type:'google',icon:'https://www.google.com/favicon.ico'},
       {name:'Apple',type:'apple',icon:'https://www.apple.com/favicon.ico'},
       {name:'Microsoft',type:'microsoft',icon:'https://www.microsoft.com/favicon.ico'},
@@ -124,25 +155,173 @@
     ];
 
     let user = null, selectedApp = null;
+    let currentQuestion = 0;
+    let answers = [];
+    let timerInterval, startTime;
 
-    /* ---------- ICON → SELECT APP & START LOGIN ---------- */
-    function selectAppAndStart(app) {
-      selectedApp = app;
-      // copy values from email tab (if any)
-      document.getElementById('name-social').value  = document.getElementById('name').value.trim();
-      document.getElementById('email-social').value = document.getElementById('email-input').value.trim();
+    /* ---------- MOCK QUESTIONS (Grade 8 Afrikaans) ---------- */
+    const MOCK_QUESTIONS = [
+      {q: "Wat is die korrekte vorm van die werkwoord in die sin: 'Ek ___ (gaan) skool toe.'?", a: "gaan", o: ["gaan", "ging", "gegaan", "ga"]},
+      {q: "Watter woord is 'n selfstandige naamwoord?", a: "hond", o: ["hardloop", "hond", "vinnig", "blou"]},
+      {q: "Wat is die meervoud van 'kind'?", a: "kinders", o: ["kinder", "kinders", "kinds", "kindes"]},
+      {q: "Kies die korrekte sin:", a: "Die kat sit op die mat.", o: ["Die kat sit op die mat.", "Die kat sit op die mat", "Die kat sit op die mat?", "Die kat sit op die mat!"]},
+      {q: "Wat is die teenwoordige tyd van 'was'?", a: "is", o: ["was", "is", "sal wees", "gewees het"]},
+      {q: "Watter woord is 'n byvoeglike naamwoord?", a: "mooi", o: ["hardloop", "mooi", "hond", "en"]},
+      {q: "Wat is die verkleinwoord van 'huis'?", a: "huisie", o: ["huisjie", "huisie", "huiskie", "huisies"]},
+      {q: "Kies die korrekte voegwoord:", a: "omdat", o: ["en", "maar", "omdat", "of"]},
+      {q: "Wat beteken 'uitstekend'?", a: "baie goed", o: ["baie sleg", "baie goed", "normaal", "onbekend"]},
+      {q: "Watter sin is in die verlede tyd?", a: "Ek het geloop.", o: ["Ek loop.", "Ek sal loop.", "Ek het geloop.", "Ek loop nou."]},
+      {q: "Wat is die korrekte spelling?", a: "biblioteek", o: ["bibliotheek", "biblioteek", "bibliohteek", "bibloteek"]},
+      {q: "Watter woord is 'n werkwoord?", a: "sing", o: ["sing", "lied", "mooi", "vinnig"]},
+      {q: "Wat is die vroulike vorm van 'seun'?", a: "meisie", o: ["seun", "meisie", "man", "vrou"]},
+      {q: "Kies die korrekte leesteken:", a: "Ek hou van appelkoos, peer en druiwe.", o: ["Ek hou van appelkoos peer en druiwe.", "Ek hou van appelkoos, peer en druiwe.", "Ek hou van appelkoos; peer en druiwe.", "Ek hou van appelkoos peer, en druiwe."]},
+      {q: "Wat is die korrekte volgorde?", a: "Jan, Piet en Susan", o: ["Jan Piet en Susan", "Jan, Piet en Susan", "Jan; Piet en Susan", "Jan Piet, en Susan"]}
+    ];
 
-      switchTab('social');               // go to social tab
-      setTimeout(() => selectApp(app), 50); // auto-select the same row
+    /* ---------- QUIZ RENDERING ---------- */
+    function renderQuiz() {
+      answers = Array(MOCK_QUESTIONS.length).fill(null);
+      currentQuestion = 0;
+      startTimer();
+      showQuestion();
+      updateProgress();
+      loadMockResults();
     }
 
-    /* ---------- TAB SWITCH ---------- */
+    function showQuestion() {
+      const q = MOCK_QUESTIONS[currentQuestion];
+      document.getElementById('question-number').textContent = `Question ${currentQuestion + 1} of ${MOCK_QUESTIONS.length}`;
+      document.getElementById('question-container').textContent = q.q;
+
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      q.o.forEach((opt, i) => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => selectOption(i);
+        if (answers[currentQuestion] === i) {
+          btn.classList.add(answers[currentQuestion] === q.o.indexOf(q.a) ? 'correct' : 'incorrect');
+        }
+        optionsDiv.appendChild(btn);
+      });
+
+      document.getElementById('prev-btn').disabled = currentQuestion === 0;
+      document.getElementById('next-btn').textContent = currentQuestion === MOCK_QUESTIONS.length - 1 ? 'Finish' : 'Next';
+      document.getElementById('results-panel').classList.add('hidden');
+    }
+
+    function selectOption(index) {
+      answers[currentQuestion] = index;
+      const buttons = document.querySelectorAll('#options-container .option-btn');
+      buttons.forEach((b, i) => {
+        b.classList.remove('selected');
+        if (i === index) b.classList.add('selected');
+      });
+    }
+
+    function nextQuestion() {
+      if (currentQuestion < MOCK_QUESTIONS.length - 1) {
+        currentQuestion++;
+        showQuestion();
+        updateProgress();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        showQuestion();
+        updateProgress();
+      }
+    }
+
+    function updateProgress() {
+      const progress = ((currentQuestion + 1) / MOCK_QUESTIONS.length) * 100;
+      document.getElementById('progress-fill').style.width = progress + '%';
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const secs = String(elapsed % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `Time: ${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function finishQuiz() {
+      clearInterval(timerInterval);
+      const correct = answers.reduce((c, a, i) => c + (a === MOCK_QUESTIONS[i].o.indexOf(MOCK_QUESTIONS[i].a) ? 1 : 0), 0);
+      document.getElementById('score-display').textContent = `${correct} / ${MOCK_QUESTIONS.length}`;
+      document.getElementById('percentage').textContent = `${Math.round((correct / MOCK_QUESTIONS.length) * 100)}%`;
+      document.getElementById('results-panel').classList.remove('hidden');
+    }
+
+    function submitQuiz() {
+      const correct = answers.filter((a, i) => a === MOCK_QUESTIONS[i].o.indexOf(MOCK_QUESTIONS[i].a)).length;
+      const score = {name: user.name, score: correct, total: MOCK_QUESTIONS.length, date: new Date().toLocaleDateString()};
+      addMockResult(score);
+      loadMockResults();
+      alert(`Quiz saved! You scored ${correct}/${MOCK_QUESTIONS.length}`);
+    }
+
+    function resetQuiz() {
+      if (confirm('Are you sure you want to reset?')) {
+        renderQuiz();
+      }
+    }
+
+    /* ---------- MOCK RESULTS ---------- */
+    let mockResults = JSON.parse(localStorage.getItem('mock_results') || '[]');
+
+    function addMockResult(score) {
+      mockResults.push(score);
+      mockResults.sort((a, b) => b.score - a.score);
+      mockResults = mockResults.slice(0, 10);
+      localStorage.setItem('mock_results', JSON.stringify(mockResults));
+    }
+
+    function loadMockResults() {
+      const list = document.getElementById('leaderboard-list');
+      list.innerHTML = mockResults.length ? '' : '<p class="text-gray-500 text-center">No scores yet</p>';
+      mockResults.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center py-2 border-b';
+        div.innerHTML = `<span class="font-medium">${i+1}. ${r.name}</span>
+                         <span class="text-indigo-600 font-bold">${r.score}/${r.total}</span>`;
+        list.appendChild(div);
+      });
+    }
+
+    function downloadCSV() {
+      if (!mockResults.length) return alert('No data to export');
+      let csv = 'Name,Score,Total,Date\n';
+      mockResults.forEach(r => csv += `${r.name},${r.score},${r.total},${r.date}\n`);
+      const blob = new Blob([csv], {type: 'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'afrikaans_quiz_leaderboard.csv';
+      a.click();
+    }
+
+    /* ---------- LOGIN SYSTEM (unchanged) ---------- */
+    function selectAppAndStart(app) {
+      selectedApp = app;
+      document.getElementById('name-social').value = document.getElementById('name').value.trim();
+      document.getElementById('email-social').value = document.getElementById('email-input').value.trim();
+      switchTab('social');
+      setTimeout(() => selectApp(app), 50);
+    }
+
     function switchTab(tab) {
       const email = document.getElementById('email-tab');
       const social = document.getElementById('social-tab');
       const btnE = document.getElementById('tab-email');
       const btnS = document.getElementById('tab-social');
-
       if (tab === 'email') {
         email.classList.remove('hidden'); social.classList.add('hidden');
         btnE.classList.add('active'); btnE.classList.remove('inactive');
@@ -154,7 +333,6 @@
       }
     }
 
-    /* ---------- SOCIAL LIST ---------- */
     function renderAppList() {
       const list = document.getElementById('app-list');
       list.innerHTML = '';
@@ -177,18 +355,15 @@
       selectedApp = app;
       document.getElementById('login-btn').disabled = false;
       document.getElementById('status').innerHTML = `<span class="text-blue-600">Selected: ${app.name}</span>`;
-
       const pc = document.getElementById('payfast-container');
       if (app.free) {
         pc.innerHTML = '<p class="text-emerald-600 font-medium">Free access!</p>';
-        // auto-login for Kahoot
         setTimeout(startLogin, 300);
       } else {
         pc.innerHTML = `<div class="payfast-btn" onclick="startPayFast()">Pay R50 with PayFast</div>`;
       }
     }
 
-    /* ---------- EMAIL DEMO ---------- */
     function emailLogin() {
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email-input').value.trim();
@@ -199,71 +374,67 @@
       enterQuiz();
     }
 
-    /* ---------- PAYFAST ---------- */
     function startPayFast() {
       const name = document.getElementById('name-social').value.trim();
       const email = document.getElementById('email-social').value.trim();
       if (!name || !email) return alert('Name & Email required');
-
-      const data = {merchant_id:PAYFAST_MERCHANT_ID,merchant_key:PAYFAST_MERCHANT_KEY,
-        return_url:PAYFAST_RETURN_URL,cancel_url:PAYFAST_RETURN_URL,
-        name_first:name.split(' ')[0],name_last:name.split(' ').slice(1).join(' ')||'User',
-        email_address:email,m_payment_id:'quiz_'+Date.now(),amount:'50.00',
-        item_name:'Grade 8 Afrikaans Quiz',custom_str1:selectedApp.type,
-        custom_str2:btoa(email),passphrase:PAYFAST_PASSPHRASE};
-
-      let str=''; for(const k in data)if(data[k]&&k!=='signature') str+=`${k}=${encodeURIComponent(data[k]).replace(/%20/g,'+')}&`;
-      str=str.slice(0,-1); data.signature=CryptoJS.MD5(str).toString();
+      const data = {
+        merchant_id: PAYFAST_MERCHANT_ID, merchant_key: PAYFAST_MERCHANT_KEY,
+        return_url: PAYFAST_RETURN_URL, cancel_url: PAYFAST_RETURN_URL,
+        name_first: name.split(' ')[0], name_last: name.split(' ').slice(1).join(' ') || 'User',
+        email_address: email, m_payment_id: 'quiz_' + Date.now(), amount: '50.00',
+        item_name: 'Grade 8 Afrikaans Quiz', custom_str1: selectedApp.type,
+        custom_str2: btoa(email), passphrase: PAYFAST_PASSPHRASE
+      };
+      let str = ''; for (const k in data) if (data[k] && k !== 'signature') str += `${k}=${encodeURIComponent(data[k]).replace(/%20/g,'+')}&`;
+      str = str.slice(0, -1); data.signature = CryptoJS.MD5(str).toString();
       new PayFast.Onsite(data).open(PAYFAST_SANDBOX);
     }
 
-    /* ---------- OAUTH (simulated for demo) ---------- */
-    function googleSignIn()   { if(GOOGLE_CLIENT_ID.includes('YOUR_')) return simulate(); /* real init … */ }
-    function appleSignIn()    { if(APPLE_CLIENT_ID.includes('YOUR_'))   return simulate(); /* real init … */ }
-    function microsoftSignIn(){ /* redirect … */ }
-    function facebookSignIn() { if(FACEBOOK_APP_ID.includes('YOUR_')) return simulate(); /* real init … */ }
-    function tiktokSignIn()   { if(TIKTOK_CLIENT_KEY.includes('YOUR_')) return simulate(); /* redirect … */ }
-    function simulate() { user={name:document.getElementById('name-social').value||'Guest',email:document.getElementById('email-social').value||'',app:selectedApp.name}; enterQuiz(); }
+    function googleSignIn() { if(GOOGLE_CLIENT_ID.includes('YOUR_')) return simulate(); }
+    function appleSignIn() { if(APPLE_CLIENT_ID.includes('YOUR_')) return simulate(); }
+    function microsoftSignIn(){}
+    function facebookSignIn() { if(FACEBOOK_APP_ID.includes('YOUR_')) return simulate(); }
+    function tiktokSignIn() { if(TIKTOK_CLIENT_KEY.includes('YOUR_')) return simulate(); }
 
-    /* ---------- START LOGIN ---------- */
+    function simulate() {
+      user = {
+        name: document.getElementById('name-social').value || 'Guest',
+        email: document.getElementById('email-social').value || '',
+        app: selectedApp.name
+      };
+      enterQuiz();
+    }
+
     function startLogin() {
       const name = document.getElementById('name-social').value.trim();
       if (!name) return alert('Please enter your name');
       if (selectedApp.free) { simulate(); return; }
-
-      const map = {google:googleSignIn, apple:appleSignIn, microsoft:microsoftSignIn,
-                   facebook:facebookSignIn, tiktok:tiktokSignIn};
+      const map = {google:googleSignIn, apple:appleSignIn, microsoft:microsoftSignIn, facebook:facebookSignIn, tiktok:tiktokSignIn};
       const fn = map[selectedApp.type];
-      if (fn) fn(); else alert('OAuth not configured – using demo mode'); simulate();
+      if (fn) fn(); else simulate();
     }
 
-    /* ---------- ENTER QUIZ ---------- */
     function enterQuiz() {
       history.replaceState(null,'',location.pathname);
       document.getElementById('signin-gate').remove();
-      document.getElementById('quiz-main').style.display='grid';
-      showBanner(); renderQuiz(); loadMockResults();
+      document.getElementById('quiz-main').style.display = 'grid';
+      showBanner();
+      renderQuiz();
+      loadMockResults();
     }
 
     function showBanner() {
-      const b=document.createElement('div');
-      b.className='fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-3 rounded-lg text-sm font-medium flex items-center gap-3 shadow-xl z-50';
-      b.innerHTML=`${user.name} (${user.app}) <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs">Logout</button>`;
+      const b = document.createElement('div');
+      b.className = 'fixed top-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-3 rounded-lg text-sm font-medium flex items-center gap-3 shadow-xl z-50';
+      b.innerHTML = `${user.name} (${user.app}) <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs">Logout</button>`;
       document.body.appendChild(b);
     }
 
-    /* ---------- QUIZ (unchanged) ---------- */
-    const MOCK_QUESTIONS = [ /* … your 15 questions … */ ];
-    function renderQuiz(){ /* same as before */ }
-    function submitQuiz(){ /* same */ }
-    function resetQuiz(){ /* same */ }
-    let mockResults = JSON.parse(localStorage.getItem('mock_results')||'[]');
-    function addMockResult(s){ /* same */ }
-    function loadMockResults(){ /* same */ }
-    function downloadCSV(){ /* same */ }
-
     /* ---------- INIT ---------- */
-    window.addEventListener('load',()=>{ renderAppList(); });
+    window.addEventListener('load', () => {
+      renderAppList();
+    });
   </script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8cK2a2K2I8Z5sV7z2a8A5xZfM5Z8fZ9K1hK0x3z7b4z5V4u7p5X2Z4W2T3p5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y8Y5t3z5z9Y1y
+</body>
+</html>
